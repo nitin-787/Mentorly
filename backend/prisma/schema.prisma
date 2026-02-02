@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url= env("DATABASE_URL")
+
+}
+
+
+
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+enum VerificationStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum BookingStatus {
+  REQUESTED
+  ACCEPTED
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  STRIPE
+  RAZORPAY
+}
+
+
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  role          Role      @default(STUDENT)
+  isVerified    Boolean   @default(false)
+  
+ 
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  teacherProfile TeacherProfile?
+  sentMessages   ChatMessage[]    @relation("SentMessages")
+  receivedMessages ChatMessage[]  @relation("ReceivedMessages")
+  studentBookings  Booking[]      @relation("StudentBookings")
+  teacherBookings  Booking[]      @relation("TeacherBookings")
+}
+
+model TeacherProfile {
+  id            String             @id @default(uuid())
+  bio           String?
+  demoVideoUrl  String?
+  hourlyRate    Decimal            @db.Decimal(10, 2) // 
+  status        VerificationStatus @default(PENDING)
+  
+  userId        String             @unique
+  user          User               @relation(fields: [userId], references: [id])
+  skills        Skill[]
+
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+}
+
+model Skill {
+  id       String           @id @default(uuid())
+  name     String           @unique
+  teachers TeacherProfile[]
+}
+
+model Booking {
+  id           String        @id @default(uuid())
+  scheduledAt  DateTime
+  status       BookingStatus @default(REQUESTED)
+  meetingLink  String?
+  
+  studentId    String
+  student      User          @relation("StudentBookings", fields: [studentId], references: [id])
+  
+  teacherId    String
+  teacher      User          @relation("TeacherBookings", fields: [teacherId], references: [id])
+
+  transaction  Transaction?
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Transaction {
+  id               String            @id @default(uuid())
+  amount           Decimal           @db.Decimal(10, 2)
+  platformFee      Decimal           @db.Decimal(10, 2)
+  teacherEarnings  Decimal           @db.Decimal(10, 2)
+  
+  status           TransactionStatus @default(PENDING)
+  provider         PaymentProvider   @default(RAZORPAY)
+  providerId       String            @unique 
+  paymentId        String?           @unique 
+  bookingId        String            @unique
+  booking          Booking           @relation(fields: [bookingId], references: [id])
+
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model ChatMessage {
+  id          String   @id @default(uuid())
+  content     String
+  
+  senderId    String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+
+  receiverId  String
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+
+  createdAt   DateTime @default(now())
+}

@@ -1,31 +1,17 @@
 {
   "compilerOptions": {
-    // File Layout
     "rootDir": "./src",
     "outDir": "./dist",
 
-    // Module + target
     "module": "commonjs",
     "target": "es2020",
+    "moduleResolution": "node",
 
-    // Node types
-    "types": ["node"],
-
-    // Enable modern ES module imports for CommonJS
     "esModuleInterop": true,
-
-    // Stricter Typechecking Options
     "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-
-    // Source maps
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
-
-    // Style & Module options
-    "isolatedModules": true,
     "skipLibCheck": true
-  }
+  },
+
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "prisma", "prisma.config.ts"]
 }
